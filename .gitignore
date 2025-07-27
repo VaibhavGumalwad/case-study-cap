@@ -1,2 +1,8 @@
-.terraform/
+# Ignore Terraform state and cache
+infra/.terraform/
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/.terraform.lock.hcl
+
+# Node.js
 node_modules/
