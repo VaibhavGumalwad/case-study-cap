@@ -30,12 +30,6 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
-# Route Table Association
-resource "aws_route_table_association" "public_association" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_route_table.public_rt.id
-}
-
 # Public Subnet
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
@@ -44,6 +38,12 @@ resource "aws_subnet" "public" {
   tags = {
     Name = "public-subnet"
   }
+}
+
+# Route Table Association
+resource "aws_route_table_association" "public_association" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public_rt.id
 }
 
 # Security Group
@@ -78,6 +78,22 @@ resource "aws_security_group" "sg" {
   }
 }
 
+# Ubuntu AMI
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
 # EC2 Instance
 resource "aws_instance" "app" {
   ami                         = data.aws_ami.ubuntu.id
@@ -92,34 +108,20 @@ resource "aws_instance" "app" {
   }
 }
 
-# Elastic IP — Associate with ENI (VPC compatible)
+# Elastic IP (No 'vpc' argument needed in AWS provider v6+)
 resource "aws_eip" "ip" {
-  network_interface         = aws_instance.app.primary_network_interface_id
-  associate_with_private_ip = aws_instance.app.private_ip
-
   tags = {
     Name = "app-eip"
   }
 }
 
-
-# Ubuntu AMI
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"]
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+# Associate EIP with EC2 instance
+resource "aws_eip_association" "eip_assoc" {
+  instance_id   = aws_instance.app.id
+  allocation_id = aws_eip.ip.id
 }
 
-# Output
+# Output the public IP
 output "public_ip" {
   description = "Public IP of the EC2 instance"
   value       = aws_eip.ip.public_ip
