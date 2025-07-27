@@ -3,9 +3,18 @@
   tasks:
     - name: Install Docker
       apt: name=docker.io update_cache=yes state=present
+
     - name: Pull Docker image
       shell: docker pull pborade90/myapp:{{ lookup('env','GIT_COMMIT') }}
+
+    - name: Stop and remove existing container if it exists
+      shell: |
+        if [ "$(docker ps -aq -f name=myapp)" ]; then
+          docker rm -f myapp
+        fi
+      ignore_errors: yes
+
     - name: Run container
       shell: >
-        docker run -d --name myapp -p 80:3000 --rm
+        docker run -d --name myapp -p 80:3000
         pborade90/myapp:{{ lookup('env','GIT_COMMIT') }}
