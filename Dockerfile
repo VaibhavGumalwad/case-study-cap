@@ -1,11 +1,18 @@
 FROM node:18-alpine
 
+# Set working directory inside the container
 WORKDIR /app
 
-COPY src/ ./
+# Copy package.json and install dependencies
+COPY package*.json ./
+RUN npm install
 
-RUN npm install express
+# Copy source and static files
+COPY src/ src/
+COPY public/ public/
 
+# Expose the app port
 EXPOSE 3000
 
-CMD ["node", "index.js"]
+# Start the application
+CMD ["node", "src/index.js"]
