@@ -54,7 +54,7 @@ pipeline {
       steps {
         script {
           def ip = sh(script: 'cd infra && terraform output -raw public_ip', returnStdout: true).trim()
-          writeFile file: 'ansible/hosts.ini', text: "[app]\n${ip}"
+          writeFile file: 'ansible/hosts.ini', text: "[app]\nubuntu@${ip}"
         }
 
         sh '''
@@ -62,7 +62,7 @@ pipeline {
           ansible-playbook -i ansible/hosts.ini ansible/deploy.yml \
           --private-key /var/lib/jenkins/.ssh/my-new-key.pem \
           -u ubuntu \
-          -o StrictHostKeyChecking=no
+          --ssh-extra-args "-o StrictHostKeyChecking=no"
         '''
       }
     }
