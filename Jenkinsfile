@@ -15,14 +15,13 @@ pipeline {
     stage('Build & Push Docker') {
       steps {
         script {
-          withCredentials([[$class: 'UsernamePasswordMultiBinding',
-            credentialsId: 'aws-credentials',
-            usernameVariable: 'AWS_ACCESS_KEY_ID',
-            passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-
-            sh 'docker buildx create --use || true'
-            sh 'docker buildx inspect --bootstrap'
-            sh 'docker buildx build --platform linux/amd64 -t pborade90/myapp:$GIT_COMMIT --push .'
+          withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+            sh '''
+              echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+              docker buildx create --use || true
+              docker buildx inspect --bootstrap
+              docker buildx build --platform linux/amd64 -t pborade90/myapp:$GIT_COMMIT --push .
+            '''
           }
         }
       }
@@ -31,8 +30,14 @@ pipeline {
     stage('Terraform Apply') {
       steps {
         dir('infra') {
-          sh 'terraform init'
-          sh 'terraform apply -auto-approve'
+          withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+            sh '''
+              export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+              export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+              terraform init
+              terraform apply -auto-approve
+            '''
+          }
         }
       }
     }
