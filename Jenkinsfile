@@ -15,7 +15,11 @@ pipeline {
     stage('Build & Push Docker') {
       steps {
         script {
-          withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+          withCredentials([usernamePassword(
+            credentialsId: 'docker-hub-creds',
+            usernameVariable: 'DOCKER_USERNAME',
+            passwordVariable: 'DOCKER_PASSWORD'
+          )]) {
             sh '''
               echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
               docker buildx create --use || true
@@ -30,7 +34,11 @@ pipeline {
     stage('Terraform Apply') {
       steps {
         dir('infra') {
-          withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+          withCredentials([usernamePassword(
+            credentialsId: 'aws-credentials',
+            usernameVariable: 'AWS_ACCESS_KEY_ID',
+            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+          )]) {
             sh '''
               export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
               export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
@@ -45,9 +53,11 @@ pipeline {
     stage('Ansible Deploy') {
       steps {
         script {
-          def ip = sh(script: 'cd infra && terraform output -raw aws_eip.ip.public_ip', returnStdout: true).trim()
+          def ip = sh(script: 'cd infra && terraform output -raw public_ip', returnStdout: true).trim()
           writeFile file: 'ansible/hosts.ini', text: "[app]\n${ip}"
         }
+
+        // 🔐 Disable SSH host key checking
         sh 'ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/hosts.ini ansible/deploy.yml'
       }
     }
