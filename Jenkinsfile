@@ -2,7 +2,8 @@ pipeline {
   agent any
 
   environment {
-    GIT_COMMIT = sh(script:'git rev-parse --short HEAD', returnStdout:true).trim()
+    // Get short Git commit hash
+    GIT_COMMIT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
   }
 
   stages {
@@ -21,6 +22,10 @@ pipeline {
     }
 
     stage('Terraform Apply') {
+      environment {
+        AWS_ACCESS_KEY_ID     = credentials('aws-credentials').username
+        AWS_SECRET_ACCESS_KEY = credentials('aws-credentials').password
+      }
       steps {
         dir('infra') {
           sh 'terraform init'
