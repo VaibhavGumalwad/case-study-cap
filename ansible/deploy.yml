@@ -1,0 +1,11 @@
+- hosts: app
+  become: true
+  tasks:
+    - name: Install Docker
+      apt: name=docker.io update_cache=yes state=present
+    - name: Pull Docker image
+      shell: docker pull pborade90/myapp:{{ lookup('env','GIT_COMMIT') }}
+    - name: Run container
+      shell: >
+        docker run -d --name myapp -p 80:3000 --rm
+        pborade90/myapp:{{ lookup('env','GIT_COMMIT') }}
