@@ -2,7 +2,6 @@ pipeline {
   agent any
 
   environment {
-    // Get short Git commit hash
     GIT_COMMIT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
   }
 
@@ -15,17 +14,21 @@ pipeline {
 
     stage('Build & Push Docker') {
       steps {
-        sh 'docker buildx create --use || true'
-        sh 'docker buildx inspect --bootstrap'
-        sh 'docker buildx build --platform linux/amd64 -t pborade90/myapp:$GIT_COMMIT --push .'
+        script {
+          withCredentials([[$class: 'UsernamePasswordMultiBinding',
+            credentialsId: 'aws-credentials',
+            usernameVariable: 'AWS_ACCESS_KEY_ID',
+            passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+
+            sh 'docker buildx create --use || true'
+            sh 'docker buildx inspect --bootstrap'
+            sh 'docker buildx build --platform linux/amd64 -t pborade90/myapp:$GIT_COMMIT --push .'
+          }
+        }
       }
     }
 
     stage('Terraform Apply') {
-      environment {
-        AWS_ACCESS_KEY_ID     = credentials('aws-credentials').username
-        AWS_SECRET_ACCESS_KEY = credentials('aws-credentials').password
-      }
       steps {
         dir('infra') {
           sh 'terraform init'
