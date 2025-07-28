@@ -162,4 +162,4 @@ Both scripts include strict error handling and verbose logging.
 ![Ansible Playbook](screenshots/ansible_output.png)
 
 ### Live App in Browser
-![Node.js App Running](screenshots/app_browser_view.png)
+![Node.js App Running](screenshots/app_broswer_view.png)
