@@ -101,7 +101,7 @@ resource "aws_instance" "app" {
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.sg.id]
   associate_public_ip_address = false
-  key_name                    = "my-new-key"
+  key_name                    = "my-ec2-deploy-key"
 
   tags = {
     Name = "nodejs-app-instance"
