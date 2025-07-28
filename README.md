@@ -4,7 +4,7 @@ This project demonstrates a full DevOps pipeline for a Node.js application using
 
 ## 📄 Report
 
-Detailed technical report is available in [REPORT.md](./REPORT.md).
+Detailed technical report is available in [REPORT.md](./Report.md).
 
 ---
 
