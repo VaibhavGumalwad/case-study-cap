@@ -1,6 +1,6 @@
 # REPORT.md
 
-## 📐 Architecture Diagram
+## Architecture Diagram
 
 ```
 +--------------------+
@@ -47,7 +47,7 @@
 
 ---
 
-## 🌿 Branching Strategy
+## Branching Strategy
 
 - **`main`**: Protected, production-ready branch.
 - **`develop`**: Default development branch.
@@ -60,7 +60,7 @@ git checkout -b develop
 
 ---
 
-## 🌎 Terraform Resource Summary
+## Terraform Resource Summary
 
 Terraform (in `infra/`) provisions:
 
@@ -85,7 +85,7 @@ Uses input variables:
 
 ---
 
-## 🚀 Jenkins CI/CD Pipeline
+## Jenkins CI/CD Pipeline
 
 ### Jenkinsfile Stages:
 
@@ -117,7 +117,7 @@ Push a change to `src/index.js` → merge into `develop` → pipeline auto-trigg
 
 ---
 
-## 🧹 Shell Scripting & Cleanup
+## Shell Scripting & Cleanup
 
 ### `scripts/build_and_push.sh`
 
@@ -150,7 +150,7 @@ Both scripts include strict error handling and verbose logging.
 
 ---
 
-## 📸 Pipeline Execution Logs / Screenshots
+## Pipeline Execution Logs / Screenshots
 
 ### Jenkins CI/CD Execution
 ![Jenkins Pipeline](screenshots/jenkins_pipeline.png)
