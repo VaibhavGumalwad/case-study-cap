@@ -52,18 +52,20 @@ pipeline {
 
     stage('Ansible Deploy') {
       steps {
-        script {
-          def ip = sh(script: 'cd infra && terraform output -raw public_ip', returnStdout: true).trim()
-          writeFile file: 'ansible/hosts.ini', text: "[app]\nubuntu@${ip}"
-        }
+        withCredentials([sshUserPrivateKey(
+          credentialsId: 'my-ec2-ssh-key',
+          keyFileVariable: 'SSH_KEY'
+        )]) {
+          script {
+            def ip = sh(script: 'cd infra && terraform output -raw public_ip', returnStdout: true).trim()
+            writeFile file: 'ansible/hosts.ini', text: "[app]\n${ip} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}"
+          }
 
-        sh '''
-          ANSIBLE_HOST_KEY_CHECKING=False \
-          ansible-playbook -i ansible/hosts.ini ansible/deploy.yml \
-          --private-key /var/lib/jenkins/.ssh/my-new-key.pem \
-          -u ubuntu \
-          --ssh-extra-args "-o StrictHostKeyChecking=no"
-        '''
+          sh '''
+            ANSIBLE_HOST_KEY_CHECKING=False \
+            ansible-playbook -i ansible/hosts.ini ansible/deploy.yml
+          '''
+        }
       }
     }
   }
