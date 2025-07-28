@@ -58,10 +58,13 @@ pipeline {
         )]) {
           script {
             def ip = sh(script: 'cd infra && terraform output -raw public_ip', returnStdout: true).trim()
-            writeFile file: 'ansible/hosts.ini', text: "[app]\n${ip} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}"
+            writeFile file: 'ansible/hosts.ini', text: """[app]
+${ip} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
+"""
           }
 
           sh '''
+            chmod 600 $SSH_KEY
             ANSIBLE_HOST_KEY_CHECKING=False \
             ansible-playbook -i ansible/hosts.ini ansible/deploy.yml
           '''
