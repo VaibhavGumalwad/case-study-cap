@@ -50,24 +50,6 @@ pipeline {
       }
     }
 
-    stage('Wait for SSH') {
-      steps {
-        script {
-          def ip = sh(script: 'cd infra && terraform output -raw public_ip', returnStdout: true).trim()
-          echo "Waiting for SSH on ${ip}..."
-          sh """
-            for i in {1..20}; do
-              nc -zv ${ip} 22 && echo 'SSH is up!' && exit 0
-              echo 'Waiting for SSH...'
-              sleep 10
-            done
-            echo 'Timeout waiting for SSH'
-            exit 1
-          """
-        }
-      }
-    }
-
     stage('Ansible Deploy') {
       steps {
         withCredentials([sshUserPrivateKey(
