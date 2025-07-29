@@ -22,29 +22,33 @@ pipeline {
           )]) {
             sh '''
               echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-              docker buildx create --use || true
-              docker buildx inspect --bootstrap
-              docker buildx build --platform linux/amd64 -t pborade90/myapp:$GIT_COMMIT --push .
+              docker build -t pborade90/myapp:$GIT_COMMIT .
+              docker push pborade90/myapp:$GIT_COMMIT
             '''
           }
         }
       }
     }
 
-    stage('Terraform Apply') {
+    stage('Fetch Instance IP from Terraform') {
       steps {
         dir('infra') {
-          withCredentials([usernamePassword(
-            credentialsId: 'aws-credentials',
-            usernameVariable: 'AWS_ACCESS_KEY_ID',
-            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-          )]) {
-            sh '''
-              export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-              export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-              terraform init
-              terraform apply -auto-approve
-            '''
+          script {
+            withCredentials([usernamePassword(
+              credentialsId: 'aws-credentials',
+              usernameVariable: 'AWS_ACCESS_KEY_ID',
+              passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+            )]) {
+              sh '''
+                export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                terraform init -input=false
+              '''
+              env.INSTANCE_IP = sh(
+                script: 'terraform output -raw public_ip',
+                returnStdout: true
+              ).trim()
+            }
           }
         }
       }
@@ -57,9 +61,9 @@ pipeline {
           keyFileVariable: 'SSH_KEY'
         )]) {
           script {
-            def ip = sh(script: 'cd infra && terraform output -raw public_ip', returnStdout: true).trim()
-            writeFile file: 'ansible/hosts.ini', text: """[app]
-${ip} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
+            writeFile file: 'ansible/hosts.ini', text: """
+[app]
+${env.INSTANCE_IP} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
 """
           }
 
