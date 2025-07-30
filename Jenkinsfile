@@ -63,7 +63,7 @@ pipeline {
           script {
             writeFile file: 'ansible/hosts.ini', text: """
 [app]
-${env.INSTANCE_IP} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
+44.209.57.203 ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
 """
           }
 
