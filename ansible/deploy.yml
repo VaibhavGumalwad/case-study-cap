@@ -2,6 +2,7 @@
   become: true
   collections:
     - community.docker
+
   tasks:
     - name: Install required packages
       apt:
@@ -14,6 +15,18 @@
     - name: Install Docker SDK for Python
       pip:
         name: docker
+
+    - name: Stop existing container (if any)
+      community.docker.docker_container:
+        name: myapp
+        state: stopped
+      ignore_errors: yes
+
+    - name: Remove existing container (if any)
+      community.docker.docker_container:
+        name: myapp
+        state: absent
+      ignore_errors: yes
 
     - name: Pull Docker image
       community.docker.docker_image:
