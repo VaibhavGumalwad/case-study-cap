@@ -4,7 +4,6 @@ pipeline {
   environment {
     DOCKERHUB_USER = 'pborade90'
     IMAGE_NAME = 'myapp'
-    GIT_COMMIT = ''
   }
 
   stages {
@@ -12,18 +11,19 @@ pipeline {
       steps {
         checkout scm
         script {
-          GIT_COMMIT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+          env.GIT_COMMIT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         }
       }
     }
 
     stage('Docker Build & Push') {
       steps {
-        script {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
           sh """
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker buildx create --use || true
             docker buildx build --platform linux/amd64 \
-              -t ${DOCKERHUB_USER}/${IMAGE_NAME}:${GIT_COMMIT} . \
+              -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${GIT_COMMIT} . \
               --push
           """
         }
@@ -32,9 +32,12 @@ pipeline {
 
     stage('Deploy with Ansible') {
       steps {
-        script {
+        withCredentials([sshUserPrivateKey(credentialsId: 'ansible-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
           sh """
-            ansible-playbook -i ansible/hosts.ini ansible/deploy.yml -e git_commit=${GIT_COMMIT}
+            export ANSIBLE_HOST_KEY_CHECKING=False
+            ansible-playbook -i ansible/hosts.ini ansible/deploy.yml \
+              --private-key "$SSH_KEY" -u "$SSH_USER" \
+              -e git_commit=${GIT_COMMIT}
           """
         }
       }
