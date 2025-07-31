@@ -17,14 +17,15 @@
 
     - name: Pull Docker image
       community.docker.docker_image:
-        name: "pborade90/myapp:{{ lookup('env','GIT_COMMIT') }}"
+        name: "pborade90/myapp"
+        tag: "{{ git_commit }}"
         source: pull
 
     - name: Run container
       community.docker.docker_container:
         name: myapp
-        image: "pborade90/myapp:{{ lookup('env','GIT_COMMIT') }}"
+        image: "pborade90/myapp:{{ git_commit }}"
         state: started
         restart_policy: unless-stopped
         ports:
-          - "80:3000"
+          - "80:80"
